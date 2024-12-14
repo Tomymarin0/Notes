@@ -22,64 +22,87 @@ function ArchivedNotes() {
     }
   };
 
-  // Función para manejar el filtro
-  const handleFilter = () => {
-    // Crear el objeto de filtros, con 'archived' fijo en 'false'
-    const filter = {
+
+
+  // Función para obtener las notas filtradas o de la primera carga
+  const fetchNotes = (filters) => {
+    setLoading(true); // Mostrar el spinner de carga
+
+    // Llamada al servicio que obtiene las notas con el filtro
+    GetNotes({ ...filters, page, limit: notesPerPage })
+      .then((response) => {
+        const newNotes = response.data || [];
+        if (newNotes.length < notesPerPage) {
+          setHasMore(false); // Si la cantidad de notas es menor a las que deberían cargarse, no hay más
+        } else {
+          setHasMore(true);
+        }
+
+        // Si estamos en la primera página, establece las notas directamente, de lo contrario, las agrega a las anteriores
+        setNotes((prevNotes) => {
+          const updatedNotes = page === 1 ? newNotes : [...prevNotes, ...newNotes];
+          
+          // Mostrar las notas cada vez que se actualicen
+          console.log('Updated Notes:', updatedNotes);
+          
+          return updatedNotes;
+        });
+
+        setLoading(false); // Deja de mostrar el spinner de carga
+      })
+      .catch((error) => {
+        console.error('Error fetching notes:', error);
+        setLoading(false); // Deja de mostrar el spinner de carga en caso de error
+      });
+  };
+
+  const updateNotes = (deletedNoteId) => {
+    if (deletedNoteId) {
+      // Filtrar la lista para eliminar la nota del estado local
+      setNotes((prevNotes) => prevNotes.filter((note) => note.id !== deletedNoteId));
+    } else {
+      // Limpiar las notas previas antes de obtener las nuevas
+      setNotes([]); // Limpiar notas actuales antes de cargar las nuevas
+  
+      const filters = {
+        important: tags.includes('important'),
+        study: tags.includes('study'),
+        work: tags.includes('work'),
+        personal: tags.includes('personal'),
+        urgent: tags.includes('urgent'),
+        archived: true, // Solo mostrar notas archivadas
+      };
+  
+      fetchNotes(filters); // Llamar a fetchNotes para obtener las notas filtradas desde el backend
+    }
+  };
+  
+  
+
+  // Llamada inicial para obtener las notas sin filtros
+  useEffect(() => {
+    // Llamar a fetchNotes cada vez que cambian las etiquetas de filtro
+    const filters = {
       important: tags.includes('important'),
       study: tags.includes('study'),
       work: tags.includes('work'),
       personal: tags.includes('personal'),
       urgent: tags.includes('urgent'),
-      archived: true, // Solo mostrar notas no archivadas
+      archived: true, // Solo mostrar notas archivadas
     };
+  
+    fetchNotes(filters); // Llamar para cargar las notas con los filtros aplicados
+  }, [tags]); // Este effect depende de las etiquetas para recargar las notas
 
-    // Resetear las notas y obtener las nuevas notas filtradas
-    setNotes([]); // Limpiar notas previas
-    setPage(1); // Resetear la página a 1
-    setHasMore(true); // Volver a permitir más notas si se cargan nuevas
-    fetchNotes(filter); // Cargar nuevas notas con los filtros
-  };
 
-  // Función para obtener las notas filtradas
-  const fetchNotes = (filters) => {
-    setLoading(true);
-
-    // Llamada al servicio que obtiene las notas con el filtro
-    GetNotes(filters)
-      .then((response) => {
-        // Verifica que la respuesta tenga notas
-        const newNotes = response.data || [];
-        if (newNotes.length < notesPerPage) {
-          setHasMore(false); // Si la cantidad de notas es menor a las que deberían cargarse, no hay más
-        }
-
-        setNotes(newNotes); // Establece las nuevas notas obtenidas
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error fetching notes:', error);
-        setLoading(false);
-      });
-  };
-
-  // Llamada inicial para obtener las notas sin filtros
   useEffect(() => {
-    fetchNotes({
-      important: false,
-      study: false,
-      work: false,
-      personal: false,
-      urgent: false,
-      archived: true,
-    });
-  }, [page]);
+    updateNotes(); // Llamar para recargar las notas si hay algún cambio
+  }, []); 
 
-  // Función para manejar el evento de scroll
   const handleScroll = (e) => {
     const bottom = e.target.scrollHeight === e.target.scrollTop + e.target.clientHeight;
-    if (bottom && !loading && hasMore) {
-      setPage((prevPage) => prevPage + 1);
+    if (bottom && !loading && hasMore && notes.length > 0) { // Asegurarse de que haya notas cargadas
+      setPage((prevPage) => prevPage + 1); // Avanzar a la siguiente página
     }
   };
 
@@ -98,23 +121,12 @@ function ArchivedNotes() {
                 key={tag}
                 type="button"
                 onClick={() => toggleTag(tag)}
-                className={`px-4 py-2 rounded-full text-sm ${
-                  tags.includes(tag) ? 'bg-orange-500' : 'bg-gray-700'
-                } text-white`}
+                className={`px-4 py-2 rounded-full text-sm ${tags.includes(tag) ? 'bg-orange-500' : 'bg-gray-700'} text-white`}
               >
                 {tag}
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="w-full max-w-4xl mb-4 flex justify-center">
-          <button
-            onClick={handleFilter}
-            className="px-6 py-2 rounded-full text-sm bg-orange-500 text-white"
-          >
-            Filter
-          </button>
         </div>
 
         <div
@@ -123,7 +135,7 @@ function ArchivedNotes() {
         >
           {notes.length > 0 ? (
             notes.map((note) => (
-              <NoteCard key={note.id} note={note} />
+              <NoteCard key={note.id} note={note} updateNotes={updateNotes} />
             ))
           ) : (
             <div className="w-full flex justify-center col-span-1 sm:col-span-2 lg:col-span-3 mt-4 text-gray-400">
@@ -151,4 +163,3 @@ function ArchivedNotes() {
 }
 
 export default ArchivedNotes;
-

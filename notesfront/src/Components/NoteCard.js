@@ -24,7 +24,7 @@ function NoteCard({ note, updateNotes }) {
     EditNotes(note.id, updatedNote)
       .then((response) => {
         console.log('Note updated successfully', response);
-        updateNotes(); // Actualizar las notas
+        updateNotes(note.id); // Elimina la nota archivada de la lista
       })
       .catch((error) => {
         console.error('Error updating note:', error);
@@ -35,12 +35,14 @@ function NoteCard({ note, updateNotes }) {
     DeleteNotes(note.id)
       .then((response) => {
         console.log('Note deleted successfully', response);
-        updateNotes(); // Actualizar las notas
+        updateNotes(note.id); // Elimina la nota borrada de la lista
       })
       .catch((error) => {
         console.error('Error deleting note:', error);
       });
   };
+  
+  
   
 
   const handleTitleClick = () => {
