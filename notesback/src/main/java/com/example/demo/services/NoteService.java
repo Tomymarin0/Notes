@@ -50,8 +50,16 @@ public class NoteService {
         return noteRepository.save(existingNote);
     }
 
-    // Obtener notas por el valor de 'archived'
-    public List<NoteModel> getNotes(Boolean archived) {
-        return noteRepository.findNotesByArchived(archived);
+    // Servicio
+    public List<NoteModel> getNotes(Boolean archived, Boolean important, Boolean study, Boolean work, Boolean personal, Boolean urgent) {
+        // Si los valores de los tags son nulos, no los aplicamos al filtro
+        if (important == null && study == null && work == null && personal == null && urgent == null) {
+            // Si no hay filtros para los tags, solo filtramos por 'archived'
+            return noteRepository.findNotesByArchived(archived);
+        }
+
+        // Llamamos a un repositorio que filtre por los valores recibidos
+        return noteRepository.findNotesByArchivedAndTags(archived, important, study, work, personal, urgent);
     }
+
 }

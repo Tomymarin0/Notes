@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, BrowserRouter } from 'react-router-dom';
+import { Routes, Route, BrowserRouter, useLocation } from 'react-router-dom';
 import MyNotes from './Pages/MyNotes';
 import ArchivedNotes from './Pages/ArchivedNotes';
 import CreateNote from './Pages/CreateNote';
@@ -10,7 +10,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<MyNotes />} />
+        <Route path="/" element={<MyNotesWithKey />} />
         <Route path="/ArchivedNotes" element={<ArchivedNotes />} />
         <Route path="/CreateNote" element={<CreateNote />} />
         <Route path="/EditNote" element={<EditNote />} />
@@ -18,6 +18,13 @@ function App() {
       </Routes>
     </BrowserRouter>
   );
+}
+
+// Componente que forzará el re-renderizado de MyNotes al cambiar la clave de location
+function MyNotesWithKey() {
+  const location = useLocation();
+
+  return <MyNotes key={location.key} />;
 }
 
 export default App;

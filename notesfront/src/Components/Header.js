@@ -14,7 +14,7 @@ function Header({ title }) {
   return (
   <header className="relative flex items-center justify-between p-4 bg-black sticky top-0 z-10 shadow-lg">
     {/* Título */}
-    <h1 className="text-3xl font-bold text-center absolute left-1/2 transform -translate-x-1/2">
+    <h1 className="text-2xl sm:text-2xl font-bold text-center absolute left-1/2 transform -translate-x-1/2">
       {title}
     </h1>
 
@@ -46,6 +46,8 @@ function Header({ title }) {
       </div>
     )}
   </header>
+
+
 
 
   );

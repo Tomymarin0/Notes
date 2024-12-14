@@ -1,9 +1,15 @@
 import React, { useState } from 'react';
 import Header from '../Components/Header';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPencilAlt, faArchive, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faArchive, faTrash, faStickyNote } from '@fortawesome/free-solid-svg-icons';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { EditNotes, DeleteNotes } from '../Services/NotesServices';  // Asegúrate de importar el servicio
 
 function NotePage() {
+  const { state } = useLocation(); // Usamos useLocation para obtener el estado de la nota
+  const note = state?.note; // Obtenemos la nota del estado, si está disponible
+  const navigate = useNavigate(); // Inicializamos el hook de navegación
+
   const availableTags = ['important', 'study', 'work', 'personal', 'urgent'];
 
   // Estado para controlar la visibilidad del menú
@@ -11,54 +17,76 @@ function NotePage() {
 
   // Funciones para manejar las acciones del menú
   const handleEdit = () => {
-    console.log('Edit clicked');
+    // Navegamos a la página de edición y pasamos el objeto `note` como estado
+    navigate('/Editnote', { state: { note } });
   };
 
   const handleArchive = () => {
+    // Crear un nuevo objeto sin el `id` y con `archived` actualizado
+    const updatedNote = { ...note, archived: !note.archived };
+    delete updatedNote.id; // Eliminar `id` del objeto
 
-    console.log('Archive clicked');
+    // Llamar al servicio `EditNote` para actualizar la nota en el backend
+    EditNotes(note.id, updatedNote)
+      .then((response) => {
+        navigate('/archivednotes');
+        console.log('Note updated successfully', response);
+      })
+      .catch((error) => {
+        console.error('Error updating note:', error);
+      });
   };
 
   const handleDelete = () => {
-
-    console.log('Delete clicked');
+    DeleteNotes(note.id)
+      .then((response) => {
+        console.log('Note deleted successfully', response);
+        // Redirige dependiendo de si la nota está archivada o no
+        if (note.archived) {
+          navigate('/archivednotes'); // Redirige a /archivednotes si archived es true
+        } else {
+          navigate('/'); // Redirige a la página principal si archived es false
+        }
+      })
+      .catch((error) => {
+        console.error('Error deleting note:', error);
+      });
   };
 
   return (
     <div className="bg-black text-white min-h-screen">
-
       <Header />
       {/* Contenedor principal */}
       <main className="flex flex-col items-center h-full px-4">
-
         {/* Título */}
         <div className="w-full max-w-4xl mb-4">
           <h1 className="text-3xl font-bold text-center mb-2">
-            Sample Note Title
+            {note ? note.title : 'Loading...'} {/* Usamos note.title si note está disponible */}
           </h1>
         </div>
 
         {/* Contenido de la nota */}
         <div className="w-full max-w-4xl mb-4">
           <p className="text-lg text-gray-300 leading-relaxed">
-            This is an example of a long note content. You can place multiple paragraphs here to simulate a long note. 
-            The content can span several lines and include any information you want to display.
-            You can also add more sections or formatting to suit your needs. 
-            For example, you could add bullet points, numbered lists, or even links if necessary.
+            {note ? note.note : 'Loading...'} {/* Usamos note.note si note está disponible */}
           </p>
         </div>
 
         {/* Etiquetas */}
         <div className="w-full max-w-4xl mb-4">
           <div className="flex justify-center flex-wrap gap-2">
-            {availableTags.map((tag, index) => (
-              <span
-                key={index}
-                className="bg-orange-500 text-white px-2 py-1 rounded-full text-sm"
-              >
-                {tag}
-              </span>
-            ))}
+            {note &&
+              availableTags.map(
+                (tag) =>
+                  note[tag] && ( // Solo mostramos los tags con valor `true` en el objeto `note`
+                    <span
+                      key={tag}
+                      className="bg-orange-500 text-white px-2 py-1 rounded-full text-sm"
+                    >
+                      {tag.charAt(0).toUpperCase() + tag.slice(1)} {/* Capitalizamos el nombre del tag */}
+                    </span>
+                  )
+              )}
           </div>
         </div>
 
@@ -89,10 +117,10 @@ function NotePage() {
                   <a
                     href="#"
                     onClick={handleArchive}
-                    className="block py-2 px-4 hover:bg-gray-700"
+                    className="block py-2 px-4"
                   >
-                    <FontAwesomeIcon icon={faArchive} className="mr-2" />
-                    Archive
+                    <FontAwesomeIcon icon={note.archived ? faStickyNote : faArchive} className="mr-2" />
+                    {note.archived ? 'Unarchive' : 'Archive'}
                   </a>
                 </li>
                 <li>

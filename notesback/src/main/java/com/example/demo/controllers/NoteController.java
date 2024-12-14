@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/notes")
+@CrossOrigin(origins = "http://localhost:3000")
 public class NoteController {
 
     @Autowired
@@ -38,9 +39,17 @@ public class NoteController {
         return noteService.updateNote(id, updatedNote);
     }
 
-        // Obtener notas filtradas por 'archived'
+    // Controlador
     @GetMapping
-    public List<NoteModel> getNotes(@RequestParam Boolean archived) {
-        return noteService.getNotes(archived);
+    public List<NoteModel> getNotes(
+        @RequestParam Boolean archived,
+        @RequestParam(required = false) Boolean important,
+        @RequestParam(required = false) Boolean study,
+        @RequestParam(required = false) Boolean work,
+        @RequestParam(required = false) Boolean personal,
+        @RequestParam(required = false) Boolean urgent
+    ) {
+        return noteService.getNotes(archived, important, study, work, personal, urgent);
     }
-}
+
+    }
